@@ -1,0 +1,49 @@
+version: "3.2"
+
+services:
+
+  mockdb:
+    image: 127.0.0.1:5000/mockdb:baseline
+    build: mockdb
+    ports:
+      - target: 8080
+        published: 8081
+        mode: ingress
+    environment:
+      JVM_OPTS: -Dnoop.count=1
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: continue
+        monitor: 60s
+        max_failure_ratio: 0.3
+
+  spring:
+    image: 127.0.0.1:5000/spring:baseline
+    build: app
+    depends_on:
+      - mockdb
+    ports:
+      - 8080:8080
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: continue
+        monitor: 60s
+        max_failure_ratio: 0.3
